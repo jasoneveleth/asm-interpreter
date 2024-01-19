@@ -20,7 +20,7 @@ const ByteCode = u32;
 extern fn startvm(*const u32) Value;
 
 pub fn main() !void {
-    const bytecode = [_]u32{0};
+    const bytecode = [_]u32{0xddddaa00};
     const val = startvm(&bytecode[0]);
     std.debug.print("Return from asm is {}\n", .{val});
 
