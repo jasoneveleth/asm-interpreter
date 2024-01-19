@@ -5,23 +5,22 @@ const Value = f64;
 
 // byte code
 // 1 byte fields
-// | BC | A | B | C |
-// | BC | A |   D   |
+// | B | C | A | op |
+// |   D   | A | op |
+// MSB             LSB
 const ByteCode = u32;
-// movzx  ecx, ah                  Decode RA
-// movzx  ebp, al                  Decode opcode
-// shr    eax, 0x10                Decode RD (or BC)
-//
-// if you want to split RD, you'll do it in preamble of byte code:
-//
-// movzx  ebp, ah                  Decode RC (split of RD)
-// movzx  eax, al                  Decode RB (split of RD)
 
-extern fn startvm(*const u32) Value;
+extern fn startvm(*const u32, *const f64, *const f64) Value;
 
 pub fn main() !void {
-    const bytecode = [_]u32{0xddddaa00};
-    const val = startvm(&bytecode[0]);
+    const load_2f_to_0 = 0x00010001;
+    const load_5f_to_1 = 0x00020101;
+    const add_0_1_to_2 = 0x00010202;
+    const halt = 0xdddd0200;
+    const bytecode = [_]u32{ load_2f_to_0, load_5f_to_1, add_0_1_to_2, halt };
+    const constants = [_]f64{ 1.0, 2.0, 5.0 };
+    var call_frame = [_]f64{ 0.0, 0.0, 0.0 };
+    const val = startvm(&bytecode[0], &constants[0], &call_frame[0]);
     std.debug.print("Return from asm is {}\n", .{val});
 
     // const stdout_file = std.io.getStdOut().writer();
