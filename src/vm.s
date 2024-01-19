@@ -4,6 +4,7 @@
 saved_x30:
     .quad 0
 
+; dispatch table for bytecodes
 jmp_table:
 	.quad _halt
 	.quad _kdouble
@@ -35,10 +36,10 @@ _startvm:
 	ldr w0, [x7], #4	; Load next bytecode, and IP+4
 	UBFX w1, w0, #0, #8	; w1 = opcode
 	UBFX w2, w0, #9, #15	; w2 = A
-	lsl w0, w0, #8		; w0 = D
+	lsr w0, w0, #16		; w0 = D
 	lsl w1, w1, #3		; w1 = opcode * 8
 	add x1, x6, x1		; x1 = jmp_table + opcode * 8
-	ldr x30, [x1]		; x30 = jmp_table[opcode * 8]
+	ldr x30, [x1]		; x30 = *x1
 	br x30
 _kdouble:
 	
