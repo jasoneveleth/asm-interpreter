@@ -5,11 +5,37 @@ jmp_table:
 	.quad _halt
 	.quad _kdouble
 	.quad _add
+	; comparisons not= = < <=
+	; .quad _islt
+	; .quad _isle
+	; .quad _iseq
+	; .quad _isne
+
+	; arith:
+	; sub
+	; mul
+	; div
+	; mod
+	; pow
+	; concat ; A = B ~ C
+
+	; .quad _ist ; jmp if D is not false
+	; .quad _isf ; jmp if D is false
+	; .quad _mov ; mv D to A
+	; .quad _not ; A = not D
+	; .quad _unm ; A = -D
+	; .quad call ; A(A[1],A[2],...,A[D])
+	; .quad callt ; tail call A(A[1],A[2],...,A[D])
+	; .quad ret ; return A
+
+	; maybe:
+	; .quad _len ; A = len(D)
+	; .quad _istc ; mov D to A and jmp if not false
+	; .quad _isfc ; mov D to A and jmp if false
 
 ; we'll use:
-; - d0 as f64 accumulator
 ; - x19 as base of dispatch table
-; - x20 as index into bytecode array (IP/PC)
+; - x20 as address of next instruction in bytecode array (IP/PC)
 ; - x21 as base of constant array
 ; - x0 is D
 ; - x22 is A

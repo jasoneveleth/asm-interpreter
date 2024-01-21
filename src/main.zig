@@ -1,26 +1,72 @@
 const std = @import("std");
+const tok = @import("tok.zig");
 
 // interpreter value
 const Value = f64;
 
 // byte code
 // 1 byte fields
-// | B | C | A | op |
+// | C | B | A | op |
 // |   D   | A | op |
 // MSB             LSB
-const ByteCode = u32;
+const ByteCode = union {
+    bits: u32,
+    ad: packed struct {
+        op: u8,
+        a: u8,
+        d: u16,
+    },
+    abc: packed struct {
+        op: u8,
+        a: u8,
+        c: u8,
+        b: u8,
+    },
+};
 
-extern fn startvm(*const u32, *const f64, *const f64) Value;
+const ArgsError = error{
+    NotEnough,
+};
+
+extern fn startvm(*u32, *f64, *f64) Value;
+
+fn compile(t: *tok.Tokenizer, bytecode: []ByteCode, constants: []Value) void {
+    const fslot = 2;
+    const cslot = 1;
+
+    var token = t.next() orelse unreachable;
+    switch (token) {
+        tok.Token.num => |val| constants[cslot] = val,
+        else => unreachable,
+    }
+
+    var load = ByteCode{ .ad = .{ .d = cslot, .a = fslot, .op = 1 } };
+    var halt = ByteCode{ .ad = .{ .d = 0xdddd, .a = fslot, .op = 0 } };
+
+    // const load_2f_to_0 = 0x00010001;
+    // const load_5f_to_1 = 0x00020101;
+    // const add_0_1_to_2 = 0x00010202;
+    // const halt = 0xdddd0200;
+    // const bytecode = [_]u32{ load_2f_to_0, load_5f_to_1, add_0_1_to_2, halt };
+
+    bytecode[0] = load;
+    bytecode[1] = halt;
+}
 
 pub fn main() !void {
-    const load_2f_to_0 = 0x00010001;
-    const load_5f_to_1 = 0x00020101;
-    const add_0_1_to_2 = 0x00010202;
-    const halt = 0xdddd0200;
-    const bytecode = [_]u32{ load_2f_to_0, load_5f_to_1, add_0_1_to_2, halt };
-    const constants = [_]f64{ 1.0, 2.0, 5.0 };
-    var call_frame = [_]f64{ 0.0, 0.0, 0.0 };
-    const val = startvm(&bytecode[0], &constants[0], &call_frame[0]);
+    var args = std.process.args();
+    _ = args.next();
+    var source = args.next() orelse return ArgsError.NotEnough;
+
+    var t = tok.new_tokenizer(source[0..source.len]);
+
+    var bytecode = [_]ByteCode{ByteCode{ .bits = 0 }} ** 3;
+    var constants = [_]Value{0.0} ** 3;
+
+    compile(&t, &bytecode, &constants);
+
+    var call_frame = [_]Value{0.0} ** 3;
+    const val = startvm(@ptrCast(&bytecode), @ptrCast(&constants), @ptrCast(&call_frame));
     std.debug.print("Return from asm is {}\n", .{val});
 
     // const stdout_file = std.io.getStdOut().writer();

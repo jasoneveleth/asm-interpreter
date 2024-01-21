@@ -10,5 +10,8 @@ pub fn build(b: *std.Build) void {
     // setup `zig build run`
     const run_step = b.step("run", "Run the app");
     const run_cmd = b.addRunArtifact(exe);
+    if (b.args) |args| {
+        run_cmd.addArgs(args);
+    }
     run_step.dependOn(&run_cmd.step);
 }
