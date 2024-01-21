@@ -46,7 +46,7 @@ fn compile(t: *tok.Tokenizer, bytecode: []ByteCode, constants: []Value) void {
     // const load_2f_to_0 = 0x00010001;
     // const load_5f_to_1 = 0x00020101;
     // const add_0_1_to_2 = 0x00010202;
-    // const halt = 0xdddd0200;
+    // const halt         = 0xdddd0200;
     // const bytecode = [_]u32{ load_2f_to_0, load_5f_to_1, add_0_1_to_2, halt };
 
     bytecode[0] = load;
