@@ -30,11 +30,12 @@ const ArgsError = error{
 
 extern fn startvm(*u32, *f64, *f64) Value;
 
-fn compile(t: *tok.Tokenizer, bytecode: []ByteCode, constants: []Value) void {
+fn compile(l: *tok.Lexer, bytecode: []ByteCode, constants: []Value) void {
     const fslot = 2;
     const cslot = 1;
 
-    var token = t.next() orelse unreachable;
+    l.next();
+    const token = l.cur;
     switch (token) {
         tok.Token.num => |val| constants[cslot] = val,
         else => unreachable,
@@ -58,12 +59,12 @@ pub fn main() !void {
     _ = args.next();
     var source = args.next() orelse return ArgsError.NotEnough;
 
-    var t = tok.new_tokenizer(source[0..source.len]);
+    var l = tok.new_tokenizer(source[0..source.len]);
 
     var bytecode = [_]ByteCode{ByteCode{ .bits = 0 }} ** 3;
     var constants = [_]Value{0.0} ** 3;
 
-    compile(&t, &bytecode, &constants);
+    compile(&l, &bytecode, &constants);
 
     var call_frame = [_]Value{0.0} ** 3;
     const val = startvm(@ptrCast(&bytecode), @ptrCast(&constants), @ptrCast(&call_frame));
