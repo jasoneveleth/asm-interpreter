@@ -15,13 +15,12 @@ pub fn main() !void {
 
     var l = lex.new_tokenizer(source[0..source.len]);
 
-    var bytecode = [_]compile.ByteCode{compile.ByteCode{ .bits = 0 }} ** 3;
-    var constants = [_]compile.Value{0.0} ** 3;
+    const alloc = std.heap.page_allocator;
+    var c = try compile.new_compiler(alloc);
 
-    try compile.compile_expr(&l, &bytecode, &constants);
+    try compile.compile(&l, &c);
 
-    var call_frame = [_]compile.Value{0.0} ** 3;
-    const val = startvm(@ptrCast(&bytecode), @ptrCast(&constants), @ptrCast(&call_frame));
+    const val = startvm(@ptrCast(c.bc), @ptrCast(c.ks), @ptrCast(c.frame));
     std.debug.print("Return from asm is {}\n", .{val});
 
     // const stdout_file = std.io.getStdOut().writer();
