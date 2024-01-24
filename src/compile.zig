@@ -121,8 +121,8 @@ const Compiler = struct {
 
 // tells you which register it went into
 fn compile_expr(c: *Compiler, l: *lex.Lexer) !u8 {
-    const token = l.cur;
-    switch (token) {
+    const tokenwcon = l.cur;
+    switch (tokenwcon.tok) {
         .eof => return lex.ParseError.GotEarlyEndOfEOF,
         .lparen => {
             l.next();
@@ -136,7 +136,7 @@ fn compile_expr(c: *Compiler, l: *lex.Lexer) !u8 {
         },
         .rparen => {
             const err = lex.ParseError.FoundWrongToken;
-            l.lex_error(err, l.linenum, .rparen);
+            l.lex_error(err, l.linenum, tokenwcon, .lparen);
             return err;
         },
         .plus => return lex.ParseError.GotEarlyEndOfEOF,
