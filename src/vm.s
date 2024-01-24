@@ -74,6 +74,17 @@ jmp_table:
 .endm
 .macro decode_AD
 .endm
+.macro type_check_num, src_reg
+	; OPTIMIZE: don't add, just shift off 48 bits, this will save 3 instructions (?? cycles) since it's already in floaing point register
+	; get upper 16 bits of *src_reg into w0
+	add x0, \src_reg, #4
+	ldr w0, [x0]
+	asr w0, w0, #16
+	; compare those 16 bits with -8 (0xFFF8). We arithmetic shifted to deal w fact that it's 32-bit register
+	cmp w0, #-8
+	; jump if upper 16 bits are (unsigned) greater or equal to -8 in 2's complement
+	b.cs _halt
+.endm
 
 .globl	_startvm
 .p2align	2 ; align to 2^2=4 bytes
@@ -104,15 +115,20 @@ _kdouble:
 _add:
 	decode_ABC ; x23 = B, x24 = C, x22 = A = dst
 	
+	; load B
 	lsl x23, x23, #3 ; x23 = B * 8
 	add x23, x23, x25 ; x23 = frame + B * 8
-	ldr d0, [x23]
-	; TODO: need to check not quiet NaN
+	ldr d0, [x23] ; d0 = frame[B]
+
+	; src_reg = x23,  will fuck up x0
+	type_check_num x23
 
 	lsl x24, x24, #3 ; x24 = C * 8
 	add x24, x24, x25 ; x24 = frame + C * 8
 	ldr d1, [x24]
-	; TODO: need to check not quiet NaN
+
+	; src_reg = x24,  will fuck up x0
+	type_check_num x24
 
 	fadd d0, d0, d1
 
