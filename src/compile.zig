@@ -4,7 +4,6 @@ const Allocator = std.mem.Allocator;
 const assert = std.debug.assert;
 
 const CompileError = error{
-    FoundEOFEarly,
     NotEnoughSpace,
 };
 
@@ -51,6 +50,15 @@ const Compiler = struct {
         return n;
     }
 
+    fn compiler_error(c: Compiler, err: CompileError) void {
+        // This is probably my fault
+        switch (err) {
+            CompileError.NotEnoughSpace => {
+                std.log.err("overflowed max bytecode length: {}", .{c.bc.len});
+            },
+        }
+    }
+
     fn next_free_reg(c: Compiler) u8 {
         for (0..c.freeregs.len) |i| {
             if (c.freeregs[i] == 1) {
@@ -69,8 +77,9 @@ const Compiler = struct {
 
     fn push_ins(c: *Compiler, b: ByteCode) !void {
         if (c.bci == c.bc.len) {
-            std.log.err("overflowed max bytecode length: {}", .{c.bc.len});
-            return CompileError.NotEnoughSpace;
+            const err = CompileError.NotEnoughSpace;
+            c.compiler_error(err);
+            return err;
         }
 
         const n = c.bci;
@@ -114,7 +123,7 @@ const Compiler = struct {
 fn compile_expr(c: *Compiler, l: *lex.Lexer) !u8 {
     const token = l.cur;
     switch (token) {
-        .eof => return CompileError.FoundEOFEarly,
+        .eof => return lex.ParseError.GotEarlyEndOfEOF,
         .lparen => {
             l.next();
             try l.consume(.plus);
@@ -125,8 +134,12 @@ fn compile_expr(c: *Compiler, l: *lex.Lexer) !u8 {
             c.free_reg(r2);
             return r1;
         },
-        .rparen => return CompileError.FoundEOFEarly,
-        .plus => return CompileError.FoundEOFEarly,
+        .rparen => {
+            const err = lex.ParseError.FoundWrongToken;
+            l.lex_error(err, l.linenum, .rparen);
+            return err;
+        },
+        .plus => return lex.ParseError.GotEarlyEndOfEOF,
         .num => |val| {
             l.next();
             const fr = c.next_free_reg();

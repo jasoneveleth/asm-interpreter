@@ -1,13 +1,14 @@
 const std = @import("std");
 const assert = std.debug.assert;
 
-const ParseError = error{
+pub const ParseError = error{
     FoundWrongToken,
-    GotEarlyEndOfText,
+    GotEarlyEndOfEOF,
 };
 
 pub const Lexer = struct {
-    source: []const u8,
+    buffname: []const u8, // filename or whatever we're using
+    source: []const u8, // code
     i: usize,
     linenum: usize,
     cur: Token,
@@ -20,6 +21,13 @@ pub const Lexer = struct {
             l.peek = null;
         } else {
             l.cur = l.scan();
+        }
+    }
+
+    pub fn lex_error(l: *Lexer, err: ParseError, line: usize, tok: Token) void {
+        switch (err) {
+            ParseError.FoundWrongToken => std.log.err("{s}:{} Got wrong token: '{}'", .{ l.buffname, line, tok }),
+            ParseError.GotEarlyEndOfEOF => std.log.err("Found eof early", .{}),
         }
     }
 
@@ -150,6 +158,7 @@ fn devour_whitespace(t: *Lexer) void {
 
 pub fn new_tokenizer(s: []const u8) Lexer {
     var tok = Lexer{
+        .buffname = "<stdin>",
         .cur = .eof,
         .peek = null,
         .i = 0,
