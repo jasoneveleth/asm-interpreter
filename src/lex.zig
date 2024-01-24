@@ -62,12 +62,31 @@ pub const Lexer = struct {
         }
     }
 
-    fn consume(l: *Lexer, texpected: Token) !void {
+    pub fn consume(l: *Lexer, texpected: Token) !void {
         if (!tokenEqual(l.cur, texpected)) {
+            std.log.err("got {}, but I expected {}", .{ l.cur, texpected });
             return ParseError.FoundWrongToken;
         } else {
             l.next();
         }
+    }
+
+    pub fn debug(l: Lexer) void {
+        std.debug.print("================\n", .{});
+        std.debug.print("state of lexer:\n", .{});
+        std.debug.print("source: \"{s}\"\n", .{l.source});
+
+        std.debug.print("         ", .{});
+        for (0..l.source.len) |i| {
+            std.debug.print("{}", .{i % 10});
+        }
+        std.debug.print("\n", .{});
+
+        std.debug.print("i: {}\n", .{l.i});
+        std.debug.print("peek: {?}\n", .{l.peek});
+        std.debug.print("cur: {}\n", .{l.cur});
+        std.debug.print("linenum: {}\n", .{l.linenum});
+        std.debug.print("================\n", .{});
     }
 };
 
@@ -88,6 +107,10 @@ pub fn tokenEqual(a: Token, b: Token) bool {
         },
         TokenType.num => switch (b) {
             TokenType.num => a.num == b.num,
+            else => false,
+        },
+        TokenType.eof => switch (b) {
+            TokenType.eof => true,
             else => false,
         },
     };
